@@ -11,6 +11,9 @@ const app = express(); // create application
 
 const logger = morgan("dev");
 
+
+app.set("view engine", "pug"); //set the engine to pug.
+app.set("views",process.cwd()+"/src/views");
 app.use(logger);
 
 app.use("/",globalRouter);
