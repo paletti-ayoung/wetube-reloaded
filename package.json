@@ -16,7 +16,9 @@
   },
   "homepage": "https://github.com/paletti-ayoung/wetube-reloaded#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "express": "^4.17.1",
+    "moment": "^2.29.1",
     "mongoose": "^5.12.13",
     "morgan": "^1.10.0",
     "pug": "^3.0.2"
