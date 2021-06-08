@@ -40,7 +40,9 @@ export const getLogin = (req,res) => {
 
 export const postLogin = async(req,res) =>{
     const {username,password} = req.body;
+
     const user = await User.findOne({username});
+    const pageTitle = 'Login'
     if(!user){
         return res.status(400).render("login",{
             pageTitle,
@@ -49,15 +51,18 @@ export const postLogin = async(req,res) =>{
     }
     const ok = await bcrypt.compare(password,user.password);
     if(!ok){
+        console.log('no!!')
         return res.status(400).render("login",{
             pageTitle,
             errorMessage : "Wrong password"
         })
     }
-    req.session.loggdedIn - true;
+
+    req.session.loggdedIn = true;
     req.session.user = user;
-    
     return res.redirect("/");
+
+
 }
 
 export const edit = (req,res) => res.send("edit User" );
