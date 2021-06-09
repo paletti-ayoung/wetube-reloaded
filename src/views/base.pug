@@ -10,16 +10,18 @@ html(lang="ko")
                 ul
                     li 
                         a(href="/") Home 
+                
                     if loggedIn 
                         li
-                            a(href-="/logout") LogOut
-                        //- li 
-                            //- a(href="/my-profile") #{loggedInUser.name}의 Profile
+                            a(href="/users/logout") Log Out
+                        li 
+                            a(href="/my-profile") #{loggedInUser.name}의 Profile
                     else                    
                         li 
                             a(href="/login") LogIn
                         li 
                             a(href="/join") Join
+
                     li 
                         a(href="/search") Search 
                     
