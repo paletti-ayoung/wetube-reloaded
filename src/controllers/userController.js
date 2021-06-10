@@ -1,4 +1,5 @@
 import User from '../models/User';
+import Video from '../models/Video';
 import bcrypt from 'bcrypt';
 import fetch from "node-fetch";
 
@@ -42,7 +43,7 @@ export const getLogin = (req, res) => {
 
 export const postLogin = async (req, res) => {
     const { username, password } = req.body;
-    const user = await User.findOne({ username,socialOnly:false });
+    const user = await User.findOne({ username, socialOnly: false });
     const pageTitle = 'Login';
 
     if (!user) {
@@ -116,8 +117,8 @@ export const finishGithubLogin = async (req, res) => {
         }
         let user = await User.findOne({ email: emailObj.email });
         if (!user) {
-             user = User.create({
-                avartarUrl:userData.avatar_url,
+            user = User.create({
+                avartarUrl: userData.avatar_url,
                 name: userData.name ? userData.name : "Unkown",
                 username: userData.login,
                 email: emailObj.email,
@@ -125,12 +126,12 @@ export const finishGithubLogin = async (req, res) => {
                 socialOnly: true,
                 location: userData.loacation,
             });
-        } 
+        }
 
         req.session.loggedIn = true;
         req.session.user = user;
         return res.redirect("/");
-    
+
     } else {
         return res.redirect("/login");
     }
@@ -138,9 +139,97 @@ export const finishGithubLogin = async (req, res) => {
 };
 
 
-export const edit = (req, res) => res.send("edit User");
-export const logout = (req, res) =>{
+export const getEdit = (req, res) => {
+    return res.render("edit-profile", { pageTitle: "Edit Profile" });
+}
+
+export const postEdit = async (req, res) => {
+    const { session: {
+        user: { _id,avatarUrl , email : sessionEmail, username : sessionUsername }
+        },
+        body : {
+            name, 
+            email,
+            username,
+            location},
+            file,
+    } = req;
+    let searchParams= [];
+    if(sessionEmail !== email){
+        searchParams.push({email})
+    }
+    if(sessionUsername !== username){
+        searchParams.push({username});
+    }
+    if(searchParams.length>0){
+        const foundUser = await User.findOne({$or : searchParams});
+        if(foundUser && foundUser._id.toString()!== _id){
+            return res.status(400).render("edit-profile",{
+                pageTitle:"Edit Profile",
+                errorMessage : "This username/email is alreay taken"
+            })
+        }
+    }
+    const updatedUser = await User.findByIdAndUpdate(_id,{
+        avatarUrl : file ? file.path : avatarUrl,
+        name,
+        email,
+        username,
+        location
+    },{new : true});
+
+    req.session.user = updatedUser;
+    return res.redirect("/users/edit");
+}
+
+export const logout = (req, res) => {
     req.session.destroy();
     return res.redirect("/")
 }
-export const see = (req, res) => res.send("See User");
+
+export const getChangePassword = (req,res ) =>{
+    if(req.session.socialOnly === true){
+        return res.redirect("/");
+    }
+    return res.render("users/change-password",{pageTitle:"Change Password"});
+}
+
+export const postChangePassword = async(req,res) =>{
+    const {
+        session:{
+            user:{ _id},
+        },
+        body:{oldPassword,newPassword, newPasswordCon},
+    } = req;
+    const user = await User.findById(_id);
+    const ok = await bcrypt.compare(oldPassword,user.password);
+ 
+    if(!ok){
+        return res.status(400).render("users/change-password",{
+            pageTitle:"Change Password",
+            errorMessage : "The current password is incorrect"
+        })
+    }
+
+    if(newPassword !== newPasswordCon){
+        return res.status(400).render("users/change-password",{
+            pageTitle: "Change Password",
+            errorMessage : "The password does not match the confirmation"
+        });
+    }
+
+    // const user = await User.findById(_id); // for hasing new password;
+    user.password = newPassword;
+    await user.save(); // we should update session too.
+    
+    return res.redirect("/users/logout");
+}
+
+export const see = async(req, res) => {
+    const {id} = req.params;
+    const user = await User.findById(id).populate("videos");
+    if(!user){
+        return res.status(404).render("404",{pageTitle:"User not found."})
+    }
+    return res.render("users/profile", {pageTitle : user.name,user});
+}
