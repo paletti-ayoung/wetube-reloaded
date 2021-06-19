@@ -15,7 +15,6 @@ import apiRouter from "./routers/apiRouter";
 // })
 
 const app = express(); // create application
-
 const logger = morgan("dev");
 // const logger = morgan(":date :method :url :status :response-time ms - :res[content-length]")
 
